@@ -1,4 +1,4 @@
-#include<cstdlib>
+#include <cstdlib>
 using namespace std;
 int main(){
     system("apt install -y language-pack-zh-hans");
