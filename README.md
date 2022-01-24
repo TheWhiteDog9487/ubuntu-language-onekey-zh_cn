@@ -17,11 +17,11 @@ apt update && apt install -y wget
 ***
 下载程序(Shell)
 ```shell
-wget
+wget https://raw.githubusercontent.com/TheWhiteDog9487/ubuntu-language-onekey-zh_cn/main/language.sh
 ```
 下载程序(C++)
 ```shell
-wget
+wget https://raw.githubusercontent.com/TheWhiteDog9487/ubuntu-language-onekey-zh_cn/main/language
 ```
 运行程序(Shell)
 ```shell
