@@ -24,6 +24,7 @@ int main(){
     system("mv /etc/default/locale /etc/default/locale.backup");
     system("touch /etc/default/locale");
     system("echo LANG=\"zh_CN.UTF-8\" > /etc/default/locale");
+    system("echo LANGUAGE=\"zh_CN:zh\" > /etc/default/locale");
     cout << "原/etc/default/locale已经备份为/etc/default/locale.backup" << endl;
     cout << "即将重启以应用语言设置，请保存您未完成的工作以防数据丢失" << endl;
     cout << "输入y或者yes重启或者按Ctrl+C终止本程序" << endl;
