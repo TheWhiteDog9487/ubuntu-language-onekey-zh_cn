@@ -20,3 +20,8 @@ wget https://raw.githubusercontent.com/TheWhiteDog9487/ubuntu-language-onekey-zh
 sudo chmod o+x language
 sudo ./language
 ```
+
+## 提示
+这个程序现在只适配了Debian和Ubuntu的x86版本，ARM架构和采用这两个系统作为底板的下游分支可用性未知。  
+短时间内我无法适配ARM架构，我根本就没这个设备。  
+如果你需要，可以尝试修改源代码之后自行构建。  
