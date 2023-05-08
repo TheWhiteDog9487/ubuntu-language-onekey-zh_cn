@@ -82,8 +82,13 @@ int main() {
         exit(-1);}
     else if (OS == "Linux") {
         if (get_linux_distro_name().find("Ubuntu") != string::npos){
+            cout << "检测到您使用的系统为：" << get_linux_distro_name() << endl;
             Ubuntu();}
         if (get_linux_distro_name().find("Debian") != string::npos){
+            cout << "检测到您使用的系统为：" << get_linux_distro_name() << endl;
+            Debian();}
+        if (get_linux_distro_name().find("Armbian") != string::npos){
+            cout << "检测到您使用的系统为：" << get_linux_distro_name() << endl;
             Debian();}
         else { exit(-1); }}
 	else if (OS == "未知"){
