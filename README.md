@@ -12,23 +12,17 @@
 |Debian|11.5|
 
 ## 使用方法
-确保已经安装wget或者有其他方法可以传输文件  
-```shell
-apt update && apt install -y wget
-```
-
-下载程序
 ### **x86_64：**
 ```shell
+apt update && apt install -y wget
 wget https://raw.githubusercontent.com/TheWhiteDog9487/ubuntu-language-onekey-zh_cn/main/language
+sudo chmod u+x language
+sudo ./language
 ```
 ### **aarch64：**
 ```shell
+apt update && apt install -y wget
 wget https://raw.githubusercontent.com/TheWhiteDog9487/ubuntu-language-onekey-zh_cn/main/language_arm
-```
-
-运行程序
-```shell
-sudo chmod u+x language
-sudo ./language
+sudo chmod u+x language_arm
+sudo ./language_arm
 ```
