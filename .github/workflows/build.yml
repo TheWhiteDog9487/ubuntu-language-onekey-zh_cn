@@ -1,6 +1,7 @@
 name: 更新二进制可执行文件
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - language.cpp
@@ -12,12 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: 安装GCC对ARM交叉编译工具链
-        run: apt install gcc-arm-none-eabi
+        run: sudo apt install g++-aarch64-linux-gnu
         
       - name: 编译源代码
         run: |
-            arm-none-eabi-g++ -o language_arm --static -std=c++26 languagecpp
-            g++ -o language --static -std=c++26 language.cpp
+            g++ -o language --static -std=c++20 language.cpp
+            aarch64-linux-gnu-g++ -o language_arm --static -std=c++20 language.cpp
 
       - uses: actions/upload-artifact@v4
         with: 
