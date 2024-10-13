@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - language.cpp
+      - "language.cpp"
+      # 只在源代码被更新时运行
 
 jobs:
 
@@ -19,33 +20,36 @@ jobs:
         run: |
             g++ -o language --static -std=c++20 language.cpp
             aarch64-linux-gnu-g++ -o language_arm --static -std=c++20 language.cpp
+          # 静态链接，避免运行时才发现缺少so动态链接库
 
       - uses: actions/upload-artifact@v4
         with: 
-          name: 可执行二进制文件
-          path: |
-            language_arm
-            language
-
+          name: language_arm
+          path: language_arm
+      - uses: actions/upload-artifact@v4
+        with: 
+          name: language
+          path: language
   push:
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # 更新仓库需要写入权限
 
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: 可执行二进制文件
+          name: language
+      - uses: actions/download-artifact@v4
+        with:
+          name: language_arm
 
-      - name: 提交
+      - name: 推送
         run: |
               git config --global user.email "gaojian520one@outlook.com"
               git config --global user.name "TheWhiteDog9487"
               git add .
               git commit -m "新的二进制文件"
               git push
-
-      - name: 推送
-        uses: ad-m/github-push-action@master
