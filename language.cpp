@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <filesystem>
+#include <ciso646>
 
 #ifdef __linux__
 #include <unistd.h>
