@@ -159,6 +159,12 @@ int main() {
         auto OS = GetCurrentSystem();
         cout << "检测到您使用的系统为：" << OS << endl;
         cout << "并且该系统工作于WSL环境" << endl;
+        if (OS.find("Ubuntu") == string::npos){
+            cout << endl
+                << "警告：当前仅适配了Ubuntu" << endl
+                << "强行使用可能会造成不可预知的问题" << endl
+                << "为避免出现故障，程序会强制退出" << endl;
+            throw runtime_error("不支持的发行版"); }
         auto CurrentUser = GetCurrentUser();
         if (CurrentUser == User::Root){
             WSL(); }
