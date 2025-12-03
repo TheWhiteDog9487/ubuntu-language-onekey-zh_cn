@@ -14,7 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: 安装GCC对ARM交叉编译工具链
-        run: sudo apt install g++-aarch64-linux-gnu
+        run: |
+            sudo apt update
+            sudo apt install g++-aarch64-linux-gnu
         
       - name: 编译源代码
         run: |
