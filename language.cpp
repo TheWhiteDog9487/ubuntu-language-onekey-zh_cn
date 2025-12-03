@@ -27,7 +27,6 @@ LC_ALL="zh_CN.UTF-8"
 
 enum class System{
     WSL,
-    Windows,
     Linux,
     Unsupported };
 enum class User{
@@ -57,9 +56,6 @@ auto GetCurrentSystemType(){
     #pragma warning(suppress : 4996)
     if (getenv("WSL_INTEROP") != nullptr){
         return System::WSL; }
-    #pragma warning(suppress : 4996)
-    if (getenv("OS") != nullptr){
-        return System::Windows;}
     #pragma warning(suppress : 4996)
     else if (getenv("HOME") != nullptr){
         return System::Linux;}
@@ -158,10 +154,7 @@ auto Debian(){
 
 int main() {
     auto OSType = GetCurrentSystemType();
-	if (OSType == System::Windows){
-		cout << "Windows请在“设置”应用中调整语言(❁´◡`❁)。" << endl;
-        throw runtime_error("不支持的操作系统"); }
-    else if (OSType == System::WSL) {
+    if (OSType == System::WSL) {
         auto OS = GetCurrentSystem();
         cout << "检测到您使用的系统为：" << OS << endl;
         cout << "并且该系统工作于WSL环境" << endl;
