@@ -102,6 +102,7 @@ auto check() {
 
 auto WSL(){
     cout << "开始更新语言配置" << endl;
+    system("apt install -y language-pack-zh-hans");
     system("update-locale LANG=zh_CN.UTF-8");
     cout << "语言配置更新完成" << endl;
     cout << "更新语言配置需要重启WSL，要现在重启吗？" << endl;
