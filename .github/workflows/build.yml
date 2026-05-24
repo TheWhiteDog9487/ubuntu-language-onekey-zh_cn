@@ -11,27 +11,34 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-linux-musl
+            artifact: language
+          - target: aarch64-linux-musl
+            artifact: language_arm
     steps:
       - uses: actions/checkout@v6
-      - name: 安装GCC对ARM交叉编译工具链
+      - name: 下载 musl 工具链
+        uses: lmq8267/dl-musl@main
+        with:
+          TARGET: ${{ matrix.target }}
+          STATIC: true
+
+      - name: 编译
         run: |
-            sudo apt update
-            sudo apt install g++-aarch64-linux-gnu
-        
-      - name: 编译源代码
-        run: |
-            g++ -o language --static -std=c++20 language.cpp
-            aarch64-linux-gnu-g++ -o language_arm --static -std=c++20 language.cpp
-          # 静态链接，避免运行时才发现缺少so动态链接库
+          if [ "${{ matrix.target }}" = "x86_64-linux-musl" ]; then
+            "$CXX" -o "${{ matrix.artifact }}" -std=c++23 -s language.cpp
+          else
+            "$CXX" -o "${{ matrix.artifact }}" -std=c++23 -s language.cpp
+          fi
 
       - uses: actions/upload-artifact@v5
-        with: 
-          name: language_arm
-          path: language_arm
-      - uses: actions/upload-artifact@v5
-        with: 
-          name: language
-          path: language
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
   push:
     needs: build
     runs-on: ubuntu-latest
