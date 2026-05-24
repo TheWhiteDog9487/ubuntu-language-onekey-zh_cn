@@ -1,4 +1,4 @@
-name: 更新二进制可执行文件
+name: 构建二进制可执行文件
 
 on:
   workflow_dispatch:
@@ -23,15 +23,15 @@ jobs:
       - name: 下载 musl 工具链
         uses: lmq8267/dl-musl@main
         with:
-          TARGET: ${{ matrix.target }}
-          STATIC: true
+          target: ${{ matrix.target }}
+          static: true
 
       - name: 编译
         run: |
           if [ "${{ matrix.target }}" = "x86_64-linux-musl" ]; then
-            "$CXX" -o "${{ matrix.artifact }}" -std=c++23 -s language.cpp
+            "$CXX" -o "${{ matrix.artifact }}" -std=c++23 -s --static language.cpp
           else
-            "$CXX" -o "${{ matrix.artifact }}" -std=c++23 -s language.cpp
+            "$CXX" -o "${{ matrix.artifact }}" -std=c++23 -s --static language.cpp
           fi
 
       - uses: actions/upload-artifact@v5
