@@ -11,31 +11,27 @@
 
 using namespace std;
 
-auto LOCALE = R"(
-LANG="zh_CN.UTF-8"
-LANGUAGE="zh_CN:zh:en_US:en"
-LC_NUMERIC="zh_CN.UTF-8"
-LC_TIME="zh_CN.UTF-8"
-LC_MONETARY="zh_CN.UTF-8"
-LC_PAPER="zh_CN.UTF-8"
-LC_IDENTIFICATION="zh_CN.UTF-8"
-LC_NAME="zh_CN.UTF-8"
-LC_ADDRESS="zh_CN.UTF-8"
-LC_TELEPHONE="zh_CN.UTF-8"
-LC_MEASUREMENT="zh_CN.UTF-8"
-LC_ALL="zh_CN.UTF-8"
-)"s;
-
 enum class System{
     WSL,
     Linux,
     Unsupported };
+enum class WslDistro{
+    Ubuntu,
+    Debian,
+    Unsupported,
+    IsNotWsl };
 enum class User{
     Root,
     Other };
 
 auto GetCurrentSystemType(){
-        if (filesystem::exists("/proc/version")) {
+    #pragma warning(suppress : 4996)
+    if (getenv("WSL_DISTRO_NAME") != nullptr){
+        return System::WSL; }
+    #pragma warning(suppress : 4996)
+    if (getenv("WSL_INTEROP") != nullptr){
+        return System::WSL; }
+    if (filesystem::exists("/proc/version")) {
         ifstream version_file("/proc/version");
         string version_info = "";
         getline(version_file, version_info);
@@ -47,21 +43,30 @@ auto GetCurrentSystemType(){
         ifstream osrelease_file("/proc/sys/kernel/osrelease");
         string osrelease_info = "";
         getline(osrelease_file, osrelease_info);
-        if (osrelease_info.find("Microsoft") != string::npos or
+        if (osrelease_info.find("microsoft") != string::npos or
             osrelease_info.find("WSL") != string::npos) {
             return System::WSL; }
         osrelease_file.close(); }
+
+    #ifdef __linux__
+        return System::Linux;
+    #else
+        return System::Unsupported;
+    #endif
+}
+
+auto GetCurrentWslDistro(){
     #pragma warning(suppress : 4996)
     if (getenv("WSL_DISTRO_NAME") != nullptr){
-        return System::WSL; }
-    #pragma warning(suppress : 4996)
-    if (getenv("WSL_INTEROP") != nullptr){
-        return System::WSL; }
-    #pragma warning(suppress : 4996)
-    else if (getenv("HOME") != nullptr){
-        return System::Linux;}
+        string DistroName = getenv("WSL_DISTRO_NAME");
+        if (DistroName.find("Ubuntu") != string::npos){
+            return WslDistro::Ubuntu; }
+        else if (DistroName.find("Debian") != string::npos){
+            return WslDistro::Debian; }
+        else{
+            return WslDistro::Unsupported; } }
     else{
-        return System::Unsupported;} }
+        return WslDistro::IsNotWsl; } }
 
 auto GetCurrentUser(){
     #pragma warning(suppress : 4996)
@@ -87,9 +92,9 @@ auto GetCurrentSystem() {
                 distro_name = line.substr(line.find("=") + 1);
                 distro_name.erase(0, 1); // remove opening quote
                 distro_name.erase(distro_name.size() - 1); // remove closing quote
-                break;}}
-        release_file.close();}
-    return distro_name;}
+                break;} }
+        release_file.close(); }
+    return distro_name; }
 
 auto check() {
     cout << "请输入您的选项（输入y或者yes继续）";
@@ -99,94 +104,79 @@ auto check() {
         return;
     else{
         cout << "输入不正确欸，如果想停止本程序的话请按下Ctrl+C" << endl;
-        check();}}
+        check(); } }
 
-auto WSL(){
-    cout << "开始更新语言配置" << endl;
-    system("apt install -y language-pack-zh-hans");
-    system("update-locale LANG=zh_CN.UTF-8");
-    cout << "语言配置更新完成" << endl;
-    cout << "更新语言配置需要重启WSL，要现在重启吗？" << endl;
-    check();
-    system("cmd.exe /c \"wsl --shutdown\""); }
+auto RebootIfIsWSL(){
+    if (GetCurrentSystemType() == System::WSL){
+        system("wsl.exe --terminate $WSL_DISTRO_NAME"); } }
 
 auto Ubuntu(){
     cout << "即将开始安装并配置简体中文语言包，请输入y或者yes继续，或者按Ctrl+C终止本程序";
     check();
+    cout << "开始更新语言配置" << endl;
+    system("apt update");
     system("apt install -y language-pack-zh-hans");
-    system("locale-gen zh_CN.UTF-8");
-    if ( filesystem::exists("/etc/locale.conf") ){
-        filesystem::copy_file("/etc/locale.conf", "/etc/locale.conf.backup", filesystem::copy_options::overwrite_existing);
-        fstream locale_conf("/etc/locale.conf", ios::out bitor ios::trunc);
-        locale_conf << LOCALE << endl;
-        locale_conf.close();
-        filesystem::permissions("/etc/locale.conf", filesystem::perms::owner_read bitor filesystem::perms::owner_write bitor filesystem::perms::group_read bitor filesystem::perms::others_read);
-        cout << "原/etc/locale.conf已经备份为/etc/locale.conf.backup" << endl;}
-    else if ( filesystem::exists("/etc/default/locale") ){
-        filesystem::copy_file("/etc/default/locale", "/etc/default/locale.backup", filesystem::copy_options::overwrite_existing);
-        fstream locale("/etc/default/locale", ios::out bitor ios::trunc);
-        locale << LOCALE << endl;
-        locale.close();
-        filesystem::permissions("/etc/default/locale", filesystem::perms::owner_read bitor filesystem::perms::owner_write bitor filesystem::perms::group_read bitor filesystem::perms::others_read);
-        cout << "原/etc/default/locale已经备份为/etc/default/locale.backup" << endl;}
+    system("update-locale LANG=zh_CN.UTF-8");
+    cout << "语言配置更新完成" << endl;
     cout << "即将重启以应用语言设置，请保存您未完成的工作以防数据丢失" << endl;
     cout << "输入y或者yes重启或者按Ctrl+C终止本程序" << endl;
     check();
-    system("reboot");}
+    RebootIfIsWSL();
+    system("reboot"); }
 
 auto Debian(){
-    filesystem::copy_file("/etc/locale.gen", "/etc/locale.gen.backup", filesystem::copy_options::overwrite_existing);
-    fstream locale_gen("/etc/locale.gen", ios::out bitor ios::trunc);
-    locale_gen << "zh_CN.UTF-8 UTF-8" << endl;
+    cout << "即将开始更新语言配置，请输入y或者yes继续，或者按Ctrl+C终止本程序";
+    check();
+    cout << "开始更新语言配置" << endl;
+    fstream locale_gen("/etc/locale.gen", ios::app);
+    locale_gen << '\n' <<
+        "zh_CN.UTF-8 UTF-8" << endl;
     locale_gen.close();
     system("locale-gen");
-    filesystem::permissions("/etc/locale.gen", filesystem::perms::owner_read bitor filesystem::perms::owner_write bitor filesystem::perms::group_read bitor filesystem::perms::others_read);
-    if ( filesystem::exists("/etc/default/locale") ){
-        filesystem::copy_file("/etc/default/locale", "/etc/default/locale.backup", filesystem::copy_options::overwrite_existing);
-        fstream locale("/etc/default/locale", ios::out bitor ios::trunc);
-        locale << LOCALE << endl;
-        locale.close();
-        filesystem::permissions("/etc/default/locale", filesystem::perms::owner_read bitor filesystem::perms::owner_write bitor filesystem::perms::group_read bitor filesystem::perms::others_read);
-        cout << "原/etc/default/locale已经备份为/etc/default/locale.backup" << endl;}
-    cout << "原/etc/locale.gen已经备份为/etc/locale.gen.backup" << endl;
+    system("update-locale LANG=zh_CN.UTF-8");
     cout << "即将重启以应用语言设置，请保存您未完成的工作以防数据丢失" << endl;
     cout << "输入y或者yes重启或者按Ctrl+C终止本程序" << endl;
     check();
+    RebootIfIsWSL();
     system("reboot");}
 
+auto OsType = GetCurrentSystemType();
+
 int main() {
-    auto OSType = GetCurrentSystemType();
-    if (OSType == System::WSL) {
-        auto OS = GetCurrentSystem();
-        cout << "检测到您使用的系统为：" << OS << endl;
-        cout << "并且该系统工作于WSL环境" << endl;
-        if (OS.find("Ubuntu") == string::npos){
-            cout << endl
-                << "警告：当前仅适配了Ubuntu" << endl
-                << "强行使用可能会造成不可预知的问题" << endl
-                << "为避免出现故障，程序会强制退出" << endl;
-            throw runtime_error("不支持的发行版"); }
-        auto CurrentUser = GetCurrentUser();
-        if (CurrentUser == User::Root){
-            WSL(); }
-        else{
-            cout << "更改语言配置需要root权限，请使用sudo重新运行本程序" << endl;
-            throw runtime_error("权限不足"); } }
-    else if (OSType == System::Linux) {
-        auto OS = GetCurrentSystem();
-        cout << "检测到您使用的系统为：" << OS << endl;
-        auto CurrentUser = GetCurrentUser();
-        if (CurrentUser == User::Other){
-            cout << "更改语言文件需要root权限，请使用sudo重新运行本程序" << endl;
-            throw runtime_error("权限不足"); }
-        if (OS.find("Ubuntu") != string::npos){
-            Ubuntu(); }
-        if (OS.find("Debian") != string::npos or
-            OS.find("Armbian") != string::npos){
-            Debian(); } }
-    else if (OSType == System::Unsupported){
+    if (OsType == System::Unsupported){
         cout << "未知操作系统，为确保数据安全将会强制退出。"
             << endl 
             << "如果是误报，请联系作者修复问题。"
             << endl;
-        throw runtime_error("不支持的操作系统"); } }
+        throw runtime_error("不支持的操作系统"); }
+
+    auto OS = GetCurrentSystem();
+    auto Distro = GetCurrentWslDistro();
+    auto CurrentUser = GetCurrentUser();
+
+    if (CurrentUser == User::Other){
+        cout << "更改语言文件需要root权限，请使用sudo重新运行本程序" << endl;
+        throw runtime_error("权限不足"); }
+
+    if (OsType == System::WSL) {
+        cout << "检测到您使用的系统为：" << OS << endl;
+        cout << "并且该系统工作于WSL环境" << endl;
+        if (Distro == WslDistro::IsNotWsl){
+            throw runtime_error("无法获取WSL发行版信息"); }
+
+        if (Distro == WslDistro::Ubuntu){ Ubuntu(); }
+        else if (Distro == WslDistro::Debian){ Debian(); }
+        else{
+            cout << endl
+                << "错误：当前仅适配了Ubuntu和Debian" << endl
+                << "强行使用可能会造成不可预知的问题" << endl
+                << "为避免出现故障，程序会强制退出" << endl;
+            throw runtime_error("不支持的发行版"); } }
+
+    else if (OsType == System::Linux) {
+        cout << "检测到您使用的系统为：" << OS << endl;
+        if (OS.find("Ubuntu") != string::npos){
+            Ubuntu(); }
+        if (OS.find("Debian") != string::npos or
+            OS.find("Armbian") != string::npos){
+            Debian(); } } }
