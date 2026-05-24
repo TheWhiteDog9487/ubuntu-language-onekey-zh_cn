@@ -12,7 +12,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
         include:
           - target: x86_64-linux-musl
@@ -39,26 +38,3 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}
-  push:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      # 更新仓库需要写入权限
-
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
-        with:
-          name: language
-      - uses: actions/download-artifact@v6
-        with:
-          name: language_arm
-
-      - name: 推送
-        run: |
-              git config --global user.email "thewhitedog9487@outlook.com"
-              git config --global user.name "TheWhiteDog9487"
-              git add .
-              git commit -m "新的二进制文件"
-              git push
