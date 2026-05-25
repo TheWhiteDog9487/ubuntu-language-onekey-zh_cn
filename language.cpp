@@ -4,6 +4,7 @@
 #include <fstream>
 #include <filesystem>
 #include <ciso646>
+#include <vector>
 
 #ifdef __linux__
     #include <unistd.h>
@@ -50,10 +51,8 @@ auto GetCurrentSystemType(){
 
     #ifdef __linux__
         return System::Linux;
-    #else
-        return System::Unsupported;
     #endif
-}
+    return System::Unsupported; }
 
 auto GetCurrentWslDistro(){
     #pragma warning(suppress : 4996)
@@ -128,9 +127,21 @@ auto Debian(){
     cout << "即将开始更新语言配置，请输入y或者yes继续，或者按Ctrl+C终止本程序";
     check();
     cout << "开始更新语言配置" << endl;
-    fstream locale_gen("/etc/locale.gen", ios::app);
+    fstream locale_gen("/etc/locale.gen");
+    if (locale_gen.is_open() == false){
+        throw system_error(errno, system_category(), "未能正确打开/etc/locale.gen"); }
+    vector<string> FileContent;
+    string Buffer = "";
+    while (getline(locale_gen, Buffer)){
+        FileContent.push_back(Buffer); }
+    for (auto& Line : FileContent){
+        if (Line == "zh_CN.UTF-8 UTF-8"){
+            goto skip_write; } }
+    locale_gen.clear();
+    locale_gen.seekp(0, ios::end);
     locale_gen << '\n' <<
         "zh_CN.UTF-8 UTF-8" << endl;
+skip_write:
     locale_gen.close();
     system("locale-gen");
     system("update-locale LANG=zh_CN.UTF-8");
@@ -138,7 +149,7 @@ auto Debian(){
     cout << "输入y或者yes重启或者按Ctrl+C终止本程序" << endl;
     check();
     RebootIfIsWSL();
-    system("reboot");}
+    system("reboot"); }
 
 auto OsType = GetCurrentSystemType();
 
